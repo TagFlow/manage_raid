@@ -1,36 +1,48 @@
 /*
- * Disk.h
+ * Raid.h
  *
  *  Created on: 21 juin 2016
  *      Author: tagflow
  */
 
-#ifndef DISK_H_
-#define DISK_H_
+#ifndef Raid_H_
+#define Raid_H_
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <cmath>
+#include <vector>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/wait.h>
 #include <sys/statvfs.h>
 
-class Disk {
+#define MESSAGE_SIZE 1024
+
+class Raid {
 
 	// methods
 	public:
-	Disk();
-	Disk(std::string name, std::string state, std::string mountPoint, int rebuild);
-	void rebuild();
-	void erase();
+	Raid();
+	Raid(std::string name, std::string state, std::string mountPoint, int rebuild);
+	void diskAdd(std::string disk);
+	void diskDelete(std::string disk);
 	void smartTest();
-	void rebuildState();
+	void rebuildState(double &recovery, double &finish, double &speed);
 	void statMem(int &Aspace, int &Tspace);
+	private:
+	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output);
 
 	// attributes
 	private:
-	std::string 	m_name;
-	std::string 	m_state;
-	std::string		m_mountPoint;
-	int 			m_rebuild;
+	std::string 				_name;
+	std::string 				_state;
+	std::string					_mountPoint;
+	int 						_rebuild;
+
+
 
 };
 
@@ -38,4 +50,4 @@ class Disk {
 
 
 
-#endif /* DISK_H_ */
+#endif /* Raid_H_ */
