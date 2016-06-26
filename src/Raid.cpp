@@ -13,21 +13,25 @@ Raid::Raid() : _name("md0"), _state("clean"), _rebuild(-1){}
 
 Raid::Raid(string name, string state, string mountPoint, int rebuild) : _name(name), _state(state), _mountPoint(mountPoint), _rebuild(rebuild){}
 
-void Raid::diskAdd(string disk){
-
-
-}
-
-void Raid::diskDelete(string disk){
+void Raid::diskManipulation(const string disk, const string mode){
 	string command;
 	vector<string> arg;
-	string output;
+	string output, error;
 
-	command = "mdadm";
-	arg.push_back("/dev/" + _name + " --remove /dev/" + disk); // param 1
-	execCmd(command, arg, output);
+	if(mode == "add"){
+		command = "mdadm";
+		arg.push_back("/dev/" + _name + " --add /dev/" + disk); // param 1
+	}
+	else if(mode == "remove"){
+		command = "mdadm";
+		arg.push_back("/dev/" + _name + " --remove /dev/" + disk); // param 1
+	}
 
-	cout << "output :" << endl << output << endl;
+	execCmd(command, arg, output, error);
+
+	if(error != ""){
+		cout << "Error : " << error << endl;
+	}
 
 }
 
@@ -89,58 +93,68 @@ void Raid::statMem(int &Aspace, int &Tspace){
 
 }
 
-int Raid::execCmd(const string cmd, vector<string> arg, string &output){
-	pid_t pid;
+int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &error){
+	pid_t pid1;
 	vector<char*> argSend;
-	int descriptor[2];
+	int descriptorSTDOut[2];
+	int descriptorSTDErr[2];
 	int status;
 	int doCounter = 0;
-	char message[MESSAGE_SIZE];
+	char messageOut[MESSAGE_SIZE] = {""};
+	char messageErr[MESSAGE_SIZE] = {""};
 	unsigned int i = 0;
 
-	pipe(descriptor);
+	pipe(descriptorSTDOut);
+	pipe(descriptorSTDErr);
 
 	do{
-		pid = fork();
+		pid1 = fork();
 		doCounter++;
-	}while((pid == -1) && (errno == EAGAIN) && (doCounter <= 10));
+	}while((pid1 == -1) && (errno == EAGAIN) && (doCounter <= 10));
 
-	if(pid == -1){
-		perror("fork : ");
+	if(pid1 == -1){
+		perror("fork");
 		return EXIT_FAILURE;
 	}
 
-	if(pid == 0){	// son process
+	if(pid1 == 0){	// son process
 
-		close(descriptor[0]);
+			close(descriptorSTDOut[0]);
+			close(descriptorSTDErr[0]);
 
-		dup2(descriptor[1],STDOUT_FILENO); // link stdout to descriptor
-		dup2(descriptor[1],STDERR_FILENO); // link stderr to descriptor
+			dup2(descriptorSTDOut[1],STDOUT_FILENO);
+			dup2(descriptorSTDErr[1],STDERR_FILENO);
 
-		argSend.push_back((char*)cmd.c_str());
-		for(i=0;i<arg.size();i++){
-			argSend.push_back((char*)arg.at(i).c_str());
-		}
-		argSend.push_back((char *)NULL);
+			argSend.push_back((char*)cmd.c_str());
+			for(i=0;i<arg.size();i++){
+				argSend.push_back((char*)arg.at(i).c_str());
+			}
+			argSend.push_back((char *)NULL);
 
-		execvp(cmd.c_str(), &argSend[0]);
+			if(execvp(cmd.c_str(), &argSend[0]) != 0){
+				perror("execvp");
+				return EXIT_FAILURE;
+			}
 
 	}
 	else{			// father process
 
-		close(descriptor[1]);
+		close(descriptorSTDOut[1]);
+		close(descriptorSTDErr[1]);
+
 		if(wait(&status) == -1){ // wait end of son's process
-			perror("wait : ");
+			perror("wait");
 			return EXIT_FAILURE;
 		}
-
 		if(WIFSIGNALED(status)){
 			cout << "error : son's process fails" << endl;
 			return EXIT_FAILURE;
 		}
 
-		read(descriptor[0], message, sizeof(message));
-		output = message;
+		read(descriptorSTDOut[0], messageOut, sizeof(messageOut));
+		output = messageOut;
+		read(descriptorSTDErr[0], messageErr, sizeof(messageErr));
+		error = messageErr;
 
 	}
 

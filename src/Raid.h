@@ -19,6 +19,7 @@
 #include <sys/wait.h>
 #include <sys/statvfs.h>
 
+
 #define MESSAGE_SIZE 1024
 
 class Raid {
@@ -27,13 +28,12 @@ class Raid {
 	public:
 	Raid();
 	Raid(std::string name, std::string state, std::string mountPoint, int rebuild);
-	void diskAdd(std::string disk);
-	void diskDelete(std::string disk);
+	void diskManipulation(const std::string disk, const std::string mode);
 	void smartTest();
 	void rebuildState(double &recovery, double &finish, double &speed);
 	void statMem(int &Aspace, int &Tspace);
 	private:
-	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output);
+	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error);
 
 	// attributes
 	private:
