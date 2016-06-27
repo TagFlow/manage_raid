@@ -37,7 +37,8 @@ int main(int argc, char*argv[]) {
 	cout << "finish = " << finish << endl;
 	cout << "speed = " << speed << endl;*/
 
-	md0.diskDelete("sda");
+	string state;
+	md0.smartTest("sda", state);
 
 	return 0;
 }
