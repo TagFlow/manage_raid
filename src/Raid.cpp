@@ -86,10 +86,12 @@ void Raid::rebuildState(double &recovery, double &finish, double &speed){
 
 	ifstream file;
 	string message;
-	//file.open ("/proc/mdstat");
-	file.open("/home/tagflow/test");
+	file.open ("/proc/mdstat");
 	string line;
 	char find = 0;
+	recovery = 0.0;
+	finish = 0.0;
+	speed = 0.0;
 	size_t i1, j1, k1;
 	size_t i2, j2, k2;
 	if(file){
