@@ -17,6 +17,7 @@ void Raid::diskManipulation(const string disk, const string mode){
 	string command;
 	vector<string> arg;
 	string output, error;
+	int exitStatus;
 
 	if(mode == "add"){
 		command = "mdadm";
@@ -27,9 +28,9 @@ void Raid::diskManipulation(const string disk, const string mode){
 		arg.push_back("/dev/" + _name + " --remove /dev/" + disk); // param 1
 	}
 
-	execCmd(command, arg, output, error);
+	execCmd(command, arg, output, error, exitStatus);
 
-	if(error != ""){
+	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
 	}
 
@@ -93,7 +94,7 @@ void Raid::statMem(int &Aspace, int &Tspace){
 
 }
 
-int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &error){
+int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &error, int &exitStatus){
 	pid_t pid1;
 	vector<char*> argSend;
 	int descriptorSTDOut[2];
@@ -155,6 +156,7 @@ int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &
 		output = messageOut;
 		read(descriptorSTDErr[0], messageErr, sizeof(messageErr));
 		error = messageErr;
+		exitStatus = WEXITSTATUS(status);
 
 	}
 

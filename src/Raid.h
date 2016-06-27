@@ -33,7 +33,7 @@ class Raid {
 	void rebuildState(double &recovery, double &finish, double &speed);
 	void statMem(int &Aspace, int &Tspace);
 	private:
-	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error);
+	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error, int &exitStatus);
 
 	// attributes
 	private:
