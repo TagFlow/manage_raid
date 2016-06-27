@@ -14,9 +14,9 @@ Raid::Raid() : _name("md0"), _state("clean"), _rebuild(-1){}
 Raid::Raid(string name, string state, string mountPoint, int rebuild) : _name(name), _state(state), _mountPoint(mountPoint), _rebuild(rebuild){}
 
 void Raid::diskManipulation(const string disk, const string mode){
-	string command;
+
 	vector<string> arg;
-	string output, error;
+	string command, output, error;
 	int exitStatus;
 
 	if(mode == "add"){
@@ -36,7 +36,37 @@ void Raid::diskManipulation(const string disk, const string mode){
 
 }
 
-void Raid::smartTest(){
+void Raid::diskDetection(vector<string> disk){
+
+
+}
+void Raid::smartTest(string disk, string state){
+
+	vector<string> arg;
+	string command, output, error;
+	int exitStatus;
+
+	command = "smartctl";
+	arg.push_back("-t short /dev/" + disk); // param 1
+
+	execCmd(command, arg, output, error, exitStatus);
+	if(exitStatus != 0){
+		cout << "Error : " << error << endl;
+	}
+
+	cout << "Please wait 2 minutes for test to complete." << endl;
+
+	sleep(120);
+
+	command = "smartctl";
+	arg.push_back("-q errorsonly -H -l selftest /dev/" + disk); // param 1
+
+	execCmd(command, arg, output, error, exitStatus);
+	if(exitStatus != 0){
+		state = error;
+		cout <<" erreur"<<endl;
+	}
+	else cout <<"pas erreur"<<endl;
 
 
 }

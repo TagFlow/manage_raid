@@ -29,7 +29,8 @@ class Raid {
 	Raid();
 	Raid(std::string name, std::string state, std::string mountPoint, int rebuild);
 	void diskManipulation(const std::string disk, const std::string mode);
-	void smartTest();
+	void diskDetection(std::vector<std::string> disk);
+	void smartTest(std::string disk, std::string state);
 	void rebuildState(double &recovery, double &finish, double &speed);
 	void statMem(int &Aspace, int &Tspace);
 	private:
