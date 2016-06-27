@@ -46,29 +46,37 @@ void Raid::smartTest(string disk, string state){
 	string command, output, error;
 	int exitStatus;
 
+	state = "";
+
 	command = "smartctl";
-	arg.push_back("-t short /dev/" + disk); // param 1
+	arg.push_back("-t"); 			// param 1
+	arg.push_back("short"); 		// param 2
+	arg.push_back("/dev/" + disk); 	// param 3
 
 	execCmd(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
 	}
 
+
 	cout << "Please wait 2 minutes for test to complete." << endl;
 
 	sleep(120);
 
+	arg.erase(arg.begin(), arg.end());
 	command = "smartctl";
-	arg.push_back("-q errorsonly -H -l selftest /dev/" + disk); // param 1
+	arg.push_back("-q"); 				// param 1
+	arg.push_back("errorsonly");		// param 2
+	arg.push_back("-H");				// param 3
+	arg.push_back("-l");				// param 4
+	arg.push_back("selftest");			// param 5
+	arg.push_back("/dev/" + disk);		// param 6
 
 	execCmd(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
 		state = error;
-		cout <<" erreur"<<endl;
+		cout <<"erreur"<<endl;
 	}
-	else cout <<"pas erreur"<<endl;
-
-
 }
 
 void Raid::rebuildState(double &recovery, double &finish, double &speed){
@@ -138,15 +146,21 @@ int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &
 	pipe(descriptorSTDOut);
 	pipe(descriptorSTDErr);
 
-	do{
-		pid1 = fork();
-		doCounter++;
-	}while((pid1 == -1) && (errno == EAGAIN) && (doCounter <= 10));
-
-	if(pid1 == -1){
-		perror("fork");
-		return EXIT_FAILURE;
+	argSend.push_back((char*)cmd.c_str());
+	for(i=0;i<arg.size();i++){
+		argSend.push_back((char*)arg.at(i).c_str());
 	}
+	argSend.push_back((char *)NULL);
+
+	do{
+			pid1 = fork();
+			doCounter++;
+		}while((pid1 == -1) && (errno == EAGAIN) && (doCounter <= 10));
+
+		if(pid1 == -1){
+			perror("fork");
+			return EXIT_FAILURE;
+		}
 
 	if(pid1 == 0){	// son process
 
@@ -155,12 +169,6 @@ int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &
 
 			dup2(descriptorSTDOut[1],STDOUT_FILENO);
 			dup2(descriptorSTDErr[1],STDERR_FILENO);
-
-			argSend.push_back((char*)cmd.c_str());
-			for(i=0;i<arg.size();i++){
-				argSend.push_back((char*)arg.at(i).c_str());
-			}
-			argSend.push_back((char *)NULL);
 
 			if(execvp(cmd.c_str(), &argSend[0]) != 0){
 				perror("execvp");
