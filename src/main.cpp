@@ -23,53 +23,53 @@ int main(int argc, char*argv[]) {
 
 	vector<string> options;
 	Raid md0(RAID_NAME, "clean", RAID_MOUNT, -1);
+	string raidDisk, disk, state;
 	int i;
 
 	for(i=0;i<argc;i++) options.push_back(argv[i]);
 
 	if(options[1] == "--tagflow"){
-		if(options[2] == "--size" || options[3] == "--size"){
-			int Aspace, Tspace;
-			md0.statMem(Aspace, Tspace);
-			cout << "Space state :" << endl;
-			cout << "available space : " << Aspace << "GB" << endl;
-			cout << "total space     : " << Tspace << "GB" << endl;
-		}
+		for(i=1;i<argc;i++){
+			if(options[i] == "--size"){
+				int Aspace, Tspace;
+				md0.statMem(Aspace, Tspace);
+				cout << "Space state :" << endl;
+				cout << "available space : " << Aspace << "GB" << endl;
+				cout << "total space     : " << Tspace << "GB" << endl;
+			}
 
-		if(options[2] == "--reconstruction-state" || options[3] == "--reconstruction-state"){
-			double recovery, finish, speed;
-			md0.rebuildState(recovery, finish, speed);
-			cout << "rebuild state :" << endl;
-			cout << "recovery = " << recovery << endl;
-			cout << "finish   = " << finish << endl;
-			cout << "speed    = " << speed << endl;
+			if(options[i] == "--reconstruction-state"){
+				double recovery, finish, speed;
+				md0.rebuildState(recovery, finish, speed);
+				cout << "rebuild state :" << endl;
+				cout << "recovery = " << recovery << endl;
+				cout << "finish   = " << finish << endl;
+				cout << "speed    = " << speed << endl;
+			}
 		}
 	}
 	else{
+		raidDisk 	= options[2];
+		disk		= options[3];
 
-
+		if(options[1] == "Fail"){
+			md0.diskManipulation(disk, "remove");
+			md0.smartTest(disk, state);
+			if(state == ""){	// not defect disk
+				// !!! AJOUTER LE FORMATTAGE DU DISQUE !!!
+				md0.diskManipulation(disk, "add");
+			}
+			else{				// defect disk
+				// !!! NOTIFICATION DANS LE LOG !!!
+				// !!! ATTENTE CHANGEMENT DISQUE !!!
+				md0.diskManipulation(disk, "add");
+			}
+		}
+		if(options[1] == "RebuildFinished"){
+			// !!! MOTIFICATION DANS LE LOG !!!
+		}
 
 	}
-
-/*
-
-	int Tspace=0;
-	int Aspace=0;
-
-	md0.statMem(Aspace,Tspace);
-
-	cout << "total space : " << Tspace << " GB" << endl;
-	cout << "available space : " << Aspace << " GB" << endl;*/
-
-	/*double recovery, finish, speed;
-
-	md0.rebuildState(recovery, finish, speed);
-	cout << "recovery = " << recovery << endl;
-	cout << "finish = " << finish << endl;
-	cout << "speed = " << speed << endl;*/
-
-	string state;
-	//md0.smartTest("sda", state);
 
 	return 0;
 }

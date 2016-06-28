@@ -27,6 +27,10 @@ void Raid::diskManipulation(const string disk, const string mode){
 		command = "mdadm";
 		arg.push_back("/dev/" + _name + " --remove /dev/" + disk); // param 1
 	}
+	else if(mode == "format"){
+		command = "";
+		//arg.push_back();
+	}
 
 	execCmd(command, arg, output, error, exitStatus);
 
@@ -58,7 +62,6 @@ void Raid::smartTest(string disk, string state){
 		cout << "Error : " << error << endl;
 	}
 
-
 	cout << "Please wait 2 minutes for test to complete." << endl;
 
 	sleep(120);
@@ -89,9 +92,9 @@ void Raid::rebuildState(double &recovery, double &finish, double &speed){
 	file.open ("/proc/mdstat");
 	string line;
 	char find = 0;
-	recovery = 0.0;
-	finish = 0.0;
-	speed = 0.0;
+	recovery = -1.0;
+	finish = -1.0;
+	speed = -1.0;
 	size_t i1, j1, k1;
 	size_t i2, j2, k2;
 	if(file){
