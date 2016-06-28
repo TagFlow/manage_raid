@@ -13,7 +13,7 @@ Raid::Raid() : _name("md0"), _state("clean"), _rebuild(-1){}
 
 Raid::Raid(string name, string state, string mountPoint, int rebuild) : _name(name), _state(state), _mountPoint(mountPoint), _rebuild(rebuild){}
 
-void Raid::diskManipulation(const string disk, const string mode){
+int Raid::diskManipulation(const string disk, const string mode){
 
 	vector<string> arg;
 	string command, output, error;
@@ -28,23 +28,35 @@ void Raid::diskManipulation(const string disk, const string mode){
 		arg.push_back("/dev/" + _name + " --remove /dev/" + disk); // param 1
 	}
 	else if(mode == "format"){
-		command = "";
-		//arg.push_back();
+		command = "bash";
+		arg.push_back("src/format.bash");
+		arg.push_back("/dev/" + disk); // ne crée pas la partition
 	}
 
 	execCmd(command, arg, output, error, exitStatus);
 
 	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
+		return EXIT_FAILURE;
 	}
-
+	else return EXIT_SUCCESS;
 }
 
-void Raid::diskDetection(vector<string> disk){
+int Raid::diskDetection(string disk){
 
+	vector<string> arg;
+	string command, output, error;
+	int exitStatus;
+	Raid sdx();
+	command = "blkid";
+	arg.push_back("/dev/" + disk);
+
+	execCmd(command, arg, output, error, exitStatus);
+	if(exitStatus != 0) return EXIT_FAILURE;
+	else return EXIT_SUCCESS;
 
 }
-void Raid::smartTest(string disk, string state){
+int Raid::smartTest(string disk, string state){
 
 	vector<string> arg;
 	string command, output, error;
@@ -60,6 +72,7 @@ void Raid::smartTest(string disk, string state){
 	execCmd(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
+		return EXIT_FAILURE;
 	}
 
 	cout << "Please wait 2 minutes for test to complete." << endl;
@@ -79,10 +92,12 @@ void Raid::smartTest(string disk, string state){
 	if(exitStatus != 0){
 		state = error;
 		cout <<"erreur"<<endl;
+		return EXIT_SUCCESS;
 	}
+	else return EXIT_SUCCESS;
 }
 
-void Raid::rebuildState(double &recovery, double &finish, double &speed){
+int Raid::rebuildState(double &recovery, double &finish, double &speed){
 // recovery : is the progress [%]
 // finish	: is the time that remain [min]
 // speed	: is the speed of the rebuild [KByte/sec]
@@ -117,23 +132,29 @@ void Raid::rebuildState(double &recovery, double &finish, double &speed){
 			}
 		}
 	}
-	else cout << "Error : failed to open file /proc/mdstat" << endl;
+	else{
+		cout << "Error : failed to open file /proc/mdstat" << endl;
+		return EXIT_FAILURE;
+	}
 
 	file.close();
+	return EXIT_SUCCESS;
 
 }
 
-void Raid::statMem(int &Aspace, int &Tspace){
+int Raid::statMem(int &Aspace, int &Tspace){
 
 	struct statvfs stat;
 	unsigned int gb = pow(1024,3);
 
 	if(statvfs(_mountPoint.c_str(), &stat) != 0){
 		cout << "Error : failed to get information about " << _name << endl;
+		return EXIT_FAILURE;
 	}
 
 	Tspace = stat.f_blocks*stat.f_frsize/gb;
 	Aspace = stat.f_bfree*stat.f_frsize/gb;
+	return EXIT_SUCCESS;
 
 }
 

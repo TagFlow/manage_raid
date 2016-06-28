@@ -28,11 +28,11 @@ class Raid {
 	public:
 	Raid();
 	Raid(std::string name, std::string state, std::string mountPoint, int rebuild);
-	void diskManipulation(const std::string disk, const std::string mode);
-	void diskDetection(std::vector<std::string> disk);
-	void smartTest(std::string disk, std::string state);
-	void rebuildState(double &recovery, double &finish, double &speed);
-	void statMem(int &Aspace, int &Tspace);
+	int diskManipulation(const std::string disk, const std::string mode);
+	int diskDetection(std::string disk);
+	int smartTest(std::string disk, std::string state);
+	int rebuildState(double &recovery, double &finish, double &speed);
+	int statMem(int &Aspace, int &Tspace);
 	private:
 	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error, int &exitStatus);
 
