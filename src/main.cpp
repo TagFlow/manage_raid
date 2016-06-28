@@ -7,36 +7,36 @@
 // Language	   : C++ 2011
 //============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
+
 #include "Raid.h"
-#include <getopt.h>
-
-//#include "spdlog/spdlog.h"
-
-#define RAID_NAME "md0"
-#define RAID_MOUNT "/media/raid"
-
+#include "spdlog/spdlog.h"
+#include "configuration/configuration.cpp"
 
 using namespace std;
 
 int main(int argc, char*argv[]) {
+	namespace spd = spdlog;
+	vector<string> 	options;
+	Configuration	config;
+	string 			raidDisk, disk, state, raidName, raidMount, logFile;
+	int 			i;
 
-	vector<string> options;
-	Raid md0(RAID_NAME, "clean", RAID_MOUNT, -1);
-	string raidDisk, disk, state;
-	int i;
+	// Read config file
+	config.Load("raid.conf");
+	if (!(config.Get("RAID_NAME", 	raidName)	&&
+		  config.Get("RAID_MOUNT", 	raidMount)	&&
+		  config.Get("LOG_FILE",	logFile)))	{
 
-	ofstream fichier("/home/sharebox/test.txt", ios::out|ios::trunc);
-	fichier << "fichier ouvert" << endl;
-
-	for(i=0;i<argc;i++){
-		fichier << "arg : " << i << " = " << argv[i] << endl;
-
+		cerr << "Error : missing parameter in configuration file." << endl;
+		return EXIT_FAILURE;
 	}
 
+	Raid md0(raidName, raidMount);
+
 	for(i=0;i<argc;i++) options.push_back(argv[i]);
+
 
 	if(options[1] == "--tagflow"){
 		for(i=1;i<argc;i++){
@@ -64,15 +64,13 @@ int main(int argc, char*argv[]) {
 			raidDisk 	= options[2];
 			disk		= options[3];
 
-			fichier << "remove : " << md0.diskManipulation(disk, "remove") << endl;
-			fichier << "smart test : " << md0.smartTest(disk, state) << endl;
+			md0.diskManipulation(disk, "remove");
+			md0.smartTest(disk, state);
 			if(state == ""){	// not defect disk
-				fichier << "not defect disk" << endl;
 				// md0.diskManipulation(disk, "format");
-				fichier << "add : " << md0.diskManipulation(disk, "add") << endl;
+				md0.diskManipulation(disk, "add");
 			}
 			else{				// defect disk
-				fichier << "defect disk" << endl;
 				// !!! NOTIFICATION DANS LE LOG !!!
 				do{				// wait that the disk is change
 					 sleep(30);
@@ -88,7 +86,6 @@ int main(int argc, char*argv[]) {
 		}*/
 
 		if(options[1] == "RebuildFinished"){
-			fichier << "rebuild finished" << endl;
 			// !!! MOTIFICATION DANS LE LOG !!!
 		}
 
