@@ -9,9 +9,9 @@
 
 using namespace std;
 
-Raid::Raid() : _name("md0"), _state("clean"), _rebuild(-1){}
+//Raid::Raid() : _name("md0"), _state("clean")){}
 
-Raid::Raid(string name, string state, string mountPoint, int rebuild) : _name(name), _state(state), _mountPoint(mountPoint), _rebuild(rebuild){}
+Raid::Raid(string name, string mountPoint) : _name(name), _mountPoint(mountPoint){}
 
 int Raid::diskManipulation(const string disk, const string mode){
 
