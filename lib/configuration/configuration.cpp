@@ -1,5 +1,7 @@
 #include "configuration/configuration.h"
 
+using namespace std;
+
 // ----------------------------------
 // method implementations
 // ----------------------------------

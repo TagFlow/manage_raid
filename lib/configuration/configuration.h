@@ -8,8 +8,6 @@
 #include <fstream>
 #include <iostream>
 
-using namespace std;
-
 class Configuration
 {
 public:
@@ -17,24 +15,24 @@ public:
     void Clear();
 
     // load a configuration file
-    bool Load(const string& File);
+    bool Load(const std::string& File);
 
     // check if value associated with given key exists
-    bool Contains(const string& key) const;
+    bool Contains(const std::string& key) const;
 
     // get value associated with given key
-    bool Get(const string& key, string& value) const;
-    bool Get(const string& key, int&    value) const;
-    bool Get(const string& key, long&   value) const;
-    bool Get(const string& key, double& value) const;
-    bool Get(const string& key, bool&   value) const;
+    bool Get(const std::string& key, std::string& value) const;
+    bool Get(const std::string& key, int&    value) const;
+    bool Get(const std::string& key, long&   value) const;
+    bool Get(const std::string& key, double& value) const;
+    bool Get(const std::string& key, bool&   value) const;
 
 private:
     // the container
-    map<string,string> data;
+    std::map<std::string,std::string> data;
 
     // remove leading and trailing tabs and spaces
-    static string Trim(const string& str);
+    static std::string Trim(const std::string& str);
 };
 
 
