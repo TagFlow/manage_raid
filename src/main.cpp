@@ -11,29 +11,52 @@
 #include <vector>
 
 #include "Raid.h"
-//#include "spdlog/spdlog.h"
+#include "spdlog/spdlog.h"
 #include "configuration/configuration.h"
 
 using namespace std;
 
 int main(int argc, char*argv[]) {
-
 	vector<string> 	options;
 	Configuration	config;
-	string 			raidDisk, disk, state, raidName, raidMount, logFile;
+	string 			raidDisk, disk, state;
+	string			raidName, raidMount, logFile, logLevel; 	// for config file
+	int				logRotOn, logSize, logMaxFile;		// for config file
+					/* logSize in Mo
+					 *
+					 */
 	int 			i;
 
-	// Read config file
-	config.Load("raid.conf");
-	if (!(config.Get("RAID_NAME", 	raidName)	&&
-		  config.Get("RAID_MOUNT", 	raidMount)	&&
-		  config.Get("LOG_FILE",	logFile)))	{
+	config.Load("raid.conf");	// load the config file
+	if (!(config.Get("RAID_NAME", 		raidName)		&&		// read essential parameter of config file
+		  config.Get("RAID_MOUNT", 		raidMount)		&&
+		  config.Get("LOG_ROTATE_ON", 	logRotOn)		&&
+		  config.Get("LOG_FILE", 		logFile)		&&
+		  config.Get("LOG_SIZE", 		logSize)		&&
+		  config.Get("LOG_MAX_FILE",	logMaxFile)		&&
+		  config.Get("LOG_LEVEL",		logLevel)))	{
 
 		cerr << "Error : missing parameter in configuration file." << endl;
 		return EXIT_FAILURE;
 	}
 
 	Raid md0(raidName, raidMount);
+
+	auto log = spdlog::basic_logger_mt("log", logFile);
+	//auto logWithRot = spdlog::rotating_logger_mt("log with rot", "/home/tagflow/logRot.log", 1024 * 1024 * logSize, logMaxFile);
+
+	// choose log method : with or not a rotation of the log
+	//if(logRotOn) log = logWithRot;
+
+	// log level
+	// set default log level
+	spdlog::set_level(spdlog::level::info);
+	// set log level read in config file
+	for(i=0; i<spdlog::level::off; i++){
+		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
+	}
+
+	log->info("manage raid has been launch");
 
 	for(i=0;i<argc;i++) options.push_back(argv[i]);
 
@@ -64,20 +87,33 @@ int main(int argc, char*argv[]) {
 				raidDisk 	= options[2];
 				disk		= options[3];
 
-				md0.diskManipulation(disk, "remove");
-				md0.smartTest(disk, state);
+				log->info("Disk ", disk, " fail");
+
+				log->info("starting removing of the disk");
+				if(md0.diskManipulation(disk, "remove")) log->info("removing disk fail");
+				else log->info("removing disk done");
+
+				log->info("starting the smart test");
+				if(md0.smartTest(disk, state)) log->info("smart test fail");
+				else log->info("smart test done");
+
 				if(state == ""){	// not defect disk
 					// md0.diskManipulation(disk, "format");
-					md0.diskManipulation(disk, "add");
+
+					if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
+					else log->info("adding disk done");
 				}
 				else{				// defect disk
-					// !!! NOTIFICATION DANS LE LOG !!!
+					log->info("Disk ", disk, " is defect. Please change the disk");
+
 					do{				// wait that the disk is change
 						 sleep(30);
 					}while(md0.diskDetection(disk));
+					log->info("New disk detected");
 
 					// md0.diskManipulation(disk, "format");
-					md0.diskManipulation(disk, "add");
+					if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
+					else log->info("adding disk done");
 				}
 			}
 			/*if(options[1] == "RebuildStarted"){
@@ -86,14 +122,15 @@ int main(int argc, char*argv[]) {
 			}*/
 
 			if(options[1] == "RebuildFinished"){
-				// !!! MOTIFICATION DANS LE LOG !!!
+				log->info("Rebuild of ", disk," finished");
 			}
 
 		}
 		return EXIT_SUCCESS;
 	}
 	else{
-		cerr << "Error : need argument";
+		cerr << "Error : need argument" << endl;;
+		log->info("Error launching program : need argument");
 		return EXIT_FAILURE;
 	}
 
