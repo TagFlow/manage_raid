@@ -56,8 +56,8 @@ int main(int argc, char*argv[]) {
 	Raid md0(raidName, raidMount, path);
 
 	// choose log method : with or not a rotation of the log
-	if(logRotOn) log = spdlog::rotating_logger_st("manage_raid", logFile, 1024 * 1024 * logSize, logMaxFile);
-	else log = spdlog::basic_logger_st("manage_raid", logFile);
+	if(logRotOn) log = spdlog::rotating_logger_st("manage_raid", logFile, 1024 * 1024 * logSize, logMaxFile, true);
+	else log = spdlog::basic_logger_st("manage_raid", logFile, true);
 
 	// log level
 	// set default log level
