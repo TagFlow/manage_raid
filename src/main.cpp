@@ -19,14 +19,18 @@ using namespace std;
 int main(int argc, char*argv[]) {
 	vector<string> 	options;
 	Configuration	config;
-	string 			raidDisk, disk, state;
+	string 			raidDisk, disk, state, path;
 	string			raidName, raidMount, logFile, logLevel; 	// for config file
 	int				logRotOn, logSize, logMaxFile;		// for config file
 					/* logSize in Mo
 					 *
 					 */
 	int 			i;
+
 	shared_ptr<spdlog::logger> log;	// var pointer for the log lib
+
+	path = argv[0];
+	path.erase(path.end() - (path.length() - path.find_last_of("/")) + 1, path.end());
 
 	// check that the program is launching by root
 	if(getuid() != 0) {
@@ -34,7 +38,7 @@ int main(int argc, char*argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	config.Load("raid.conf");	// load the config file
+	config.Load(path + "raid.conf");	// load the config file !!! ajouter gestion erreur ouverture fichier !!!
 	if (!(config.Get("RAID_NAME", 		raidName)		&&		// read essential parameter of config file
 		  config.Get("RAID_MOUNT", 		raidMount)		&&
 		  config.Get("LOG_ROTATE_ON", 	logRotOn)		&&
@@ -47,7 +51,7 @@ int main(int argc, char*argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	Raid md0(raidName, raidMount);
+	Raid md0(raidName, raidMount, path);
 
 	// choose log method : with or not a rotation of the log
 	if(logRotOn) log = spdlog::rotating_logger_st("manage_raid", logFile, 1024 * 1024 * logSize, logMaxFile);
@@ -93,9 +97,9 @@ int main(int argc, char*argv[]) {
 			}
 		}
 		else{
+			raidDisk 	= options[2];
 
 			if(options[1] == "Fail"){
-				raidDisk 	= options[2];
 				disk		= options[3];
 
 				log->info("Disk {} fail", disk);
@@ -136,6 +140,7 @@ int main(int argc, char*argv[]) {
 			}*/
 
 			if(options[1] == "RebuildFinished"){
+				disk		= options[3];
 				log->info("Rebuild of {} finished", disk);
 			}
 
