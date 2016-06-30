@@ -21,16 +21,16 @@ int Raid::diskManipulation(const string disk, const string mode){
 
 	if(mode == "add"){
 		command = "mdadm";
-		arg.push_back("/dev/" + _name + " --add /dev/" + disk); // param 1
+		arg.push_back(_name + " --add " + disk); // param 1
 	}
 	else if(mode == "remove"){
 		command = "mdadm";
-		arg.push_back("/dev/" + _name + " --remove /dev/" + disk); // param 1
+		arg.push_back(_name + " --remove " + disk); // param 1
 	}
 	else if(mode == "format"){
 		command = "bash";
 		arg.push_back(_path + "format.bash");
-		arg.push_back("/dev/" + disk);
+		arg.push_back(disk);
 	}
 
 	execCmd(command, arg, output, error, exitStatus);
@@ -49,7 +49,7 @@ int Raid::diskDetection(string disk){
 	int exitStatus;
 	Raid sdx();
 	command = "blkid";
-	arg.push_back("/dev/" + disk);
+	arg.push_back(disk);
 
 	execCmd(command, arg, output, error, exitStatus);
 	if(exitStatus != 0) return EXIT_FAILURE;
@@ -67,7 +67,7 @@ int Raid::smartTest(string disk, string state){
 	command = "smartctl";
 	arg.push_back("-t"); 			// param 1
 	arg.push_back("short"); 		// param 2
-	arg.push_back("/dev/" + disk); 	// param 3
+	arg.push_back(disk); 	// param 3
 
 	execCmd(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
@@ -86,7 +86,7 @@ int Raid::smartTest(string disk, string state){
 	arg.push_back("-H");				// param 3
 	arg.push_back("-l");				// param 4
 	arg.push_back("selftest");			// param 5
-	arg.push_back("/dev/" + disk);		// param 6
+	arg.push_back(disk);		// param 6
 
 	execCmd(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
@@ -106,6 +106,7 @@ int Raid::rebuildState(double &recovery, double &finish, double &speed){
 	string message;
 	file.open ("/proc/mdstat");
 	string line;
+	string shortName = _name;
 	char find = 0;
 	recovery = -1.0;
 	finish = -1.0;
@@ -115,7 +116,8 @@ int Raid::rebuildState(double &recovery, double &finish, double &speed){
 	if(file){
 		while(!file.eof() && find<2){
 			getline(file,line);
-			if(line.find(_name) != string::npos) find = 1;
+			shortName.erase(0, shortName.find_last_of("/"));
+			if(line.find(shortName) != string::npos) find = 1;
 			if(find){
 				i1=line.find("recovery");
 				j1=line.find("finish");
