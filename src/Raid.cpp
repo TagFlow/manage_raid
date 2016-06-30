@@ -21,11 +21,15 @@ int Raid::diskManipulation(const string disk, const string mode){
 
 	if(mode == "add"){
 		command = "mdadm";
-		arg.push_back(_name + " --add " + disk); // param 1
+		arg.push_back(_name); 		// param 1
+		arg.push_back("--add");		// param 2
+		arg.push_back(disk);		// param 3
 	}
 	else if(mode == "remove"){
 		command = "mdadm";
-		arg.push_back(_name + " --remove " + disk); // param 1
+		arg.push_back(_name); 		// param 1
+		arg.push_back("--remove");	// param 2
+		arg.push_back(disk);		// param 3
 	}
 	else if(mode == "format"){
 		command = "bash";
