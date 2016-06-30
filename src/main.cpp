@@ -26,6 +26,7 @@ int main(int argc, char*argv[]) {
 					 *
 					 */
 	int 			i;
+	shared_ptr<spdlog::logger> log;	// var pointer for the log lib
 
 	config.Load("raid.conf");	// load the config file
 	if (!(config.Get("RAID_NAME", 		raidName)		&&		// read essential parameter of config file
@@ -42,11 +43,9 @@ int main(int argc, char*argv[]) {
 
 	Raid md0(raidName, raidMount);
 
-	auto log = spdlog::basic_logger_mt("log", logFile);
-	//auto logWithRot = spdlog::rotating_logger_mt("log with rot", "/home/tagflow/logRot.log", 1024 * 1024 * logSize, logMaxFile);
-
 	// choose log method : with or not a rotation of the log
-	//if(logRotOn) log = logWithRot;
+	if(logRotOn) log = spdlog::rotating_logger_st("manage_raid", logFile, 1024 * 1024 * logSize, logMaxFile);
+	else log = spdlog::basic_logger_st("manage_raid", logFile);
 
 	// log level
 	// set default log level
@@ -64,20 +63,29 @@ int main(int argc, char*argv[]) {
 		if(options[1] == "--tagflow"){
 			for(i=1;i<argc;i++){
 				if(options[i] == "--size"){
+					log->info("ask disk raid space");
 					int Aspace, Tspace;
 					md0.statMem(Aspace, Tspace);
-					cout << "Space state :" << endl;
+					log->info("available space = ", Aspace, " GB",
+							  "total space = ", Tspace, " GB");
+
+					/*cout << "Space state :" << endl;		// uncomment to have information in stdout
 					cout << "available space : " << Aspace << "GB" << endl;
-					cout << "total space     : " << Tspace << "GB" << endl;
+					cout << "total space     : " << Tspace << "GB" << endl;*/
 				}
 
 				if(options[i] == "--reconstruction-state"){
+					log->info("ask reconstruction state");
 					double recovery, finish, speed;
 					md0.rebuildState(recovery, finish, speed);
-					cout << "rebuild state :" << endl;
-					cout << "recovery = " << recovery << endl;
-					cout << "finish   = " << finish << endl;
-					cout << "speed    = " << speed << endl;
+					log->info("rebuild state = ", recovery, " %",
+							  "finish remaining = ", finish, " min",
+							  "speed = ", speed, " Mo/s");
+
+					/*cout << "Reconstruction state :" << endl; 	// uncomment to have information in stdout
+					cout << "rebuild state = " << recovery << " %" << endl;
+					cout << "finish remaining = " << finish << " min" << endl;
+					cout << "speed = " << speed << " Mo/s" << endl;*/
 				}
 			}
 		}
@@ -89,7 +97,7 @@ int main(int argc, char*argv[]) {
 
 				log->info("Disk ", disk, " fail");
 
-				log->info("starting removing of the disk");
+				log->info("starting removing of the disk in the raid array");
 				if(md0.diskManipulation(disk, "remove")) log->info("removing disk fail");
 				else log->info("removing disk done");
 
