@@ -11,7 +11,7 @@ using namespace std;
 
 //Raid::Raid() : _name("md0"), _state("clean")){}
 
-Raid::Raid(string name, string mountPoint) : _name(name), _mountPoint(mountPoint){}
+Raid::Raid(string name, string mountPoint, string path) : _name(name), _mountPoint(mountPoint), _path(path) {}
 
 int Raid::diskManipulation(const string disk, const string mode){
 
@@ -29,8 +29,8 @@ int Raid::diskManipulation(const string disk, const string mode){
 	}
 	else if(mode == "format"){
 		command = "bash";
-		arg.push_back("src/format.bash");
-		arg.push_back("/dev/" + disk); // ne crée pas la partition
+		arg.push_back(_path + "format.bash");
+		arg.push_back("/dev/" + disk);
 	}
 
 	execCmd(command, arg, output, error, exitStatus);

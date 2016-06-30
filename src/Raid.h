@@ -26,7 +26,7 @@ class Raid {
 
 	// methods
 	public:
-	Raid(std::string name, std::string mountPoint);
+	Raid(std::string name, std::string mountPoint, std::string path);
 	int diskManipulation(const std::string disk, const std::string mode);
 	int diskDetection(std::string disk);
 	int smartTest(std::string disk, std::string state);
@@ -39,7 +39,7 @@ class Raid {
 	private:
 	std::string 				_name;
 	std::string					_mountPoint;
-
+	std::string					_path;
 };
 
 
