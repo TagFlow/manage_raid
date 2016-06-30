@@ -28,6 +28,12 @@ int main(int argc, char*argv[]) {
 	int 			i;
 	shared_ptr<spdlog::logger> log;	// var pointer for the log lib
 
+	// check that the program is launching by root
+	if(getuid() != 0) {
+		cerr << "Error : must be launch by root" << endl;
+		return EXIT_FAILURE;
+	}
+
 	config.Load("raid.conf");	// load the config file
 	if (!(config.Get("RAID_NAME", 		raidName)		&&		// read essential parameter of config file
 		  config.Get("RAID_MOUNT", 		raidMount)		&&
@@ -106,7 +112,8 @@ int main(int argc, char*argv[]) {
 				else log->info("smart test done");
 
 				if(state == ""){	// not defect disk
-					// md0.diskManipulation(disk, "format");
+					if(md0.diskManipulation(disk, "format")) log->info("format disk fail");
+					else log->info("format disk done");
 
 					if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
 					else log->info("adding disk done");
@@ -119,7 +126,9 @@ int main(int argc, char*argv[]) {
 					}while(md0.diskDetection(disk));
 					log->info("New disk detected");
 
-					// md0.diskManipulation(disk, "format");
+					if(md0.diskManipulation(disk, "format")) log->info("format disk fail");
+					else log->info("format disk done");
+
 					if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
 					else log->info("adding disk done");
 				}
