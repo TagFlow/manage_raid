@@ -9,6 +9,8 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <cctype>
 
 #include "Raid.h"
 #include "spdlog/spdlog.h"
@@ -99,7 +101,9 @@ int main(int argc, char*argv[]) {
 		else{
 			raidDisk 	= options[2];
 
-			if(options[1] == "Fail"){
+			transform(options[1].begin(), options[1].end(), options[1].begin(), ::tolower);
+
+			if(options[1].find("fail") != string::npos){
 				disk		= options[3];
 
 				log->info("Disk {} fail", disk);
@@ -134,12 +138,12 @@ int main(int argc, char*argv[]) {
 					else log->info("adding disk done");
 				}
 			}
-			/*if(options[1] == "RebuildStarted"){
+			/*if(options[1] == "rebuildstarted"){
 				fichier << "rebuild started" << endl;
 				// !!! MOTIFICATION DANS LE LOG !!!
 			}*/
 
-			if(options[1] == "RebuildFinished"){
+			if(options[1] == "rebuildfinished"){
 				disk		= options[3];
 				log->info("Rebuild of {} finished", disk);
 			}
