@@ -116,7 +116,7 @@ int Raid::rebuildState(double &recovery, double &finish, double &speed){
 	if(file){
 		while(!file.eof() && find<2){
 			getline(file,line);
-			shortName.erase(0, shortName.find_last_of("/"));
+			shortName.erase(0, shortName.find_last_of("/")+1);
 			if(line.find(shortName) != string::npos) find = 1;
 			if(find){
 				i1=line.find("recovery");
