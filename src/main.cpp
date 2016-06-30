@@ -72,8 +72,7 @@ int main(int argc, char*argv[]) {
 					log->info("ask disk raid space");
 					int Aspace, Tspace;
 					md0.statMem(Aspace, Tspace);
-					log->info("available space = ", Aspace, " GB",
-							  "total space = ", Tspace, " GB");
+					log->info(" disk raid space : available space = {} GB       total space = {} GB", Aspace, Tspace);
 
 					/*cout << "Space state :" << endl;		// uncomment to have information in stdout
 					cout << "available space : " << Aspace << "GB" << endl;
@@ -84,13 +83,11 @@ int main(int argc, char*argv[]) {
 					log->info("ask reconstruction state");
 					double recovery, finish, speed;
 					md0.rebuildState(recovery, finish, speed);
-					log->info("rebuild state = ", recovery, " %",
-							  "finish remaining = ", finish, " min",
-							  "speed = ", speed, " Mo/s");
+					log->info("reconstruction state : rebuild state = {} %       time remaining = {} min       speed = {} Mo/s", recovery, finish, speed);
 
 					/*cout << "Reconstruction state :" << endl; 	// uncomment to have information in stdout
 					cout << "rebuild state = " << recovery << " %" << endl;
-					cout << "finish remaining = " << finish << " min" << endl;
+					cout << "time remaining = " << finish << " min" << endl;
 					cout << "speed = " << speed << " Mo/s" << endl;*/
 				}
 			}
@@ -101,7 +98,7 @@ int main(int argc, char*argv[]) {
 				raidDisk 	= options[2];
 				disk		= options[3];
 
-				log->info("Disk ", disk, " fail");
+				log->info("Disk {} fail", disk);
 
 				log->info("starting removing of the disk in the raid array");
 				if(md0.diskManipulation(disk, "remove")) log->info("removing disk fail");
@@ -119,7 +116,7 @@ int main(int argc, char*argv[]) {
 					else log->info("adding disk done");
 				}
 				else{				// defect disk
-					log->info("Disk ", disk, " is defect. Please change the disk");
+					log->info("Disk {} is defect. Please change the disk", disk);
 
 					do{				// wait that the disk is change
 						 sleep(30);
@@ -139,7 +136,7 @@ int main(int argc, char*argv[]) {
 			}*/
 
 			if(options[1] == "RebuildFinished"){
-				log->info("Rebuild of ", disk," finished");
+				log->info("Rebuild of {} finished", disk);
 			}
 
 		}
