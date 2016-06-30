@@ -117,9 +117,11 @@ int main(int argc, char*argv[]) {
 				else log->info("smart test done");
 
 				if(state == ""){	// not defect disk
+					log->info("starting formatting disk");
 					if(md0.diskManipulation(disk, "format")) log->info("format disk fail");
 					else log->info("format disk done");
 
+					log->info("starting adding disk in the raid array");
 					if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
 					else log->info("adding disk done");
 				}
@@ -131,17 +133,18 @@ int main(int argc, char*argv[]) {
 					}while(md0.diskDetection(disk));
 					log->info("New disk detected");
 
+					log->info("starting formatting disk");
 					if(md0.diskManipulation(disk, "format")) log->info("format disk fail");
 					else log->info("format disk done");
 
+					log->info("starting adding disk in the raid array");
 					if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
 					else log->info("adding disk done");
 				}
 			}
-			/*if(options[1] == "rebuildstarted"){
-				fichier << "rebuild started" << endl;
-				// !!! MOTIFICATION DANS LE LOG !!!
-			}*/
+			if(options[1] == "rebuildstarted"){
+				log->info("Rebuild of {} started", disk);
+			}
 
 			if(options[1] == "rebuildfinished"){
 				disk		= options[3];
