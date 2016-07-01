@@ -73,7 +73,7 @@ int main(int argc, char*argv[]) {
 		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
 	}
 
-	log->info("manage raid has been launch");
+	log->info("-- manage raid has been launch --");
 
 	for(i=0;i<argc;i++) options.push_back(argv[i]);
 
@@ -116,13 +116,13 @@ int main(int argc, char*argv[]) {
 			raidDisk 	= options[2];
 			disk		= options[3];
 
-			log->info("Disk {} fail", disk);
+			log->info("disk {} fail", disk);
 
 			log->info("starting removing of the disk in the raid array");
 			if(md0.diskManipulation(disk, "remove")) log->info("removing disk fail");
 			else log->info("removing disk done");
 
-			log->info("starting the smart test");
+			log->info("starting the smart test. Please wait 2 min");
 			if(md0.smartTest(disk, state)) log->info("smart test fail");
 			else log->info("smart test done");
 
@@ -153,13 +153,11 @@ int main(int argc, char*argv[]) {
 			}
 		}
 		else if(options[1] == "rebuildstarted"){
-			disk = options[3];
-			log->info("Rebuild of {} started", disk);
+			log->info("Rebuild started");
 		}
 
 		else if(options[1] == "rebuildfinished"){
-			disk = options[3];
-			log->info("Rebuild of {} finished", disk);
+			log->info("Rebuild finished");
 		}
 		else{
 			log->info("Error launching program : need valid argument");
