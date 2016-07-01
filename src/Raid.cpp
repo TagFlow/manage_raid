@@ -9,8 +9,6 @@
 
 using namespace std;
 
-//Raid::Raid() : _name("md0"), _state("clean")){}
-
 Raid::Raid(string name, string mountPoint, string path) : _name(name), _mountPoint(mountPoint), _path(path) {}
 
 int Raid::diskManipulation(const string disk, const string mode){
@@ -37,12 +35,14 @@ int Raid::diskManipulation(const string disk, const string mode){
 		arg.push_back(disk);
 	}
 
+	sleep(1);	// need to wait that disk is really in fail : mdadm have some lag
 	execCmd(command, arg, output, error, exitStatus);
 
 	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
 		return EXIT_FAILURE;
 	}
+
 	else return EXIT_SUCCESS;
 }
 
@@ -51,7 +51,7 @@ int Raid::diskDetection(string disk){
 	vector<string> arg;
 	string command, output, error;
 	int exitStatus;
-	Raid sdx();
+
 	command = "blkid";
 	arg.push_back(disk);
 
