@@ -89,7 +89,7 @@ int main(int argc, char*argv[]) {
 				log->info("ask disk raid space");
 				int Aspace, Tspace;
 				md0.statMem(Aspace, Tspace);
-				log->info(" disk raid space : available space = {} GB       total space = {} GB", Aspace, Tspace);
+				log->info("disk raid space : available space = {} GB       total space = {} GB", Aspace, Tspace);
 
 				/*cout << "Space state :" << endl;		// uncomment to have information in stdout
 				cout << "available space : " << Aspace << "GB" << endl;
