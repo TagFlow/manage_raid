@@ -14,36 +14,29 @@
 #include <cmath>
 #include <vector>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
-#include <sys/wait.h>
 #include <sys/statvfs.h>
-
-
-#define MESSAGE_SIZE 1024
+#include "Command.h"
 
 class Raid {
 
 	// methods
 	public:
+	Raid();
 	Raid(std::string name, std::string mountPoint, std::string path);
 	int diskManipulation(const std::string disk, const std::string mode);
 	int diskDetection(std::string disk);
 	int smartTest(std::string disk, std::string state);
 	int rebuildState(double &recovery, double &finish, double &speed);
 	int statMem(int &Aspace, int &Tspace);
-	private:
-	int execCmd(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error, int &exitStatus);
+
 
 	// attributes
 	private:
 	std::string 				_name;
 	std::string					_mountPoint;
 	std::string					_path;
+	Command						_cmd;
 };
-
-
-
-
 
 #endif /* Raid_H_ */

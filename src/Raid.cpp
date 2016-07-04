@@ -9,6 +9,7 @@
 
 using namespace std;
 
+Raid::Raid() {}
 Raid::Raid(string name, string mountPoint, string path) : _name(name), _mountPoint(mountPoint), _path(path) {}
 
 int Raid::diskManipulation(const string disk, const string mode){
@@ -36,7 +37,7 @@ int Raid::diskManipulation(const string disk, const string mode){
 	}
 
 	sleep(1);	// need to wait that disk is really in fail : mdadm have some lag
-	execCmd(command, arg, output, error, exitStatus);
+	_cmd.exec(command, arg, output, error, exitStatus);
 
 	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
@@ -55,7 +56,7 @@ int Raid::diskDetection(string disk){
 	command = "blkid";
 	arg.push_back(disk);
 
-	execCmd(command, arg, output, error, exitStatus);
+	_cmd.exec(command, arg, output, error, exitStatus);
 	if(exitStatus != 0) return EXIT_FAILURE;
 	else return EXIT_SUCCESS;
 
@@ -73,7 +74,7 @@ int Raid::smartTest(string disk, string state){
 	arg.push_back("short"); 		// param 2
 	arg.push_back(disk); 	// param 3
 
-	execCmd(command, arg, output, error, exitStatus);
+	_cmd.exec(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
 		cout << "Error : " << error << endl;
 		return EXIT_FAILURE;
@@ -92,7 +93,7 @@ int Raid::smartTest(string disk, string state){
 	arg.push_back("selftest");			// param 5
 	arg.push_back(disk);		// param 6
 
-	execCmd(command, arg, output, error, exitStatus);
+	_cmd.exec(command, arg, output, error, exitStatus);
 	if(exitStatus != 0){
 		state = error;
 		cout <<"erreur"<<endl;
@@ -164,74 +165,6 @@ int Raid::statMem(int &Aspace, int &Tspace){
 
 }
 
-int Raid::execCmd(const string cmd, vector<string> arg, string &output, string &error, int &exitStatus){
-	pid_t pid1;
-	vector<char*> argSend;
-	int descriptorSTDOut[2];
-	int descriptorSTDErr[2];
-	int status;
-	int doCounter = 0;
-	char messageOut[MESSAGE_SIZE] = {""};
-	char messageErr[MESSAGE_SIZE] = {""};
-	unsigned int i = 0;
-
-	pipe(descriptorSTDOut);
-	pipe(descriptorSTDErr);
-
-	argSend.push_back((char*)cmd.c_str());
-	for(i=0;i<arg.size();i++){
-		argSend.push_back((char*)arg.at(i).c_str());
-	}
-	argSend.push_back((char *)NULL);
-
-	do{
-			pid1 = fork();
-			doCounter++;
-		}while((pid1 == -1) && (errno == EAGAIN) && (doCounter <= 10));
-
-		if(pid1 == -1){
-			perror("fork");
-			return EXIT_FAILURE;
-		}
-
-	if(pid1 == 0){	// son process
-
-			close(descriptorSTDOut[0]);
-			close(descriptorSTDErr[0]);
-
-			dup2(descriptorSTDOut[1],STDOUT_FILENO);
-			dup2(descriptorSTDErr[1],STDERR_FILENO);
-
-			if(execvp(cmd.c_str(), &argSend[0]) != 0){
-				perror("execvp");
-				return EXIT_FAILURE;
-			}
-
-	}
-	else{			// father process
-
-		close(descriptorSTDOut[1]);
-		close(descriptorSTDErr[1]);
-
-		if(wait(&status) == -1){ // wait end of son's process
-			perror("wait");
-			return EXIT_FAILURE;
-		}
-		if(WIFSIGNALED(status)){
-			cout << "error : son's process fails" << endl;
-			return EXIT_FAILURE;
-		}
-
-		read(descriptorSTDOut[0], messageOut, sizeof(messageOut));
-		output = messageOut;
-		read(descriptorSTDErr[0], messageErr, sizeof(messageErr));
-		error = messageErr;
-		exitStatus = WEXITSTATUS(status);
-
-	}
-
-	return EXIT_SUCCESS;
-}
 
 
 
