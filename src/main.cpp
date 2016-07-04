@@ -16,6 +16,10 @@
 #include "spdlog/spdlog.h"
 #include "configuration/configuration.h"
 
+#include "Command.h"
+
+int progDetected(std::string program);
+
 using namespace std;
 
 int main(int argc, char*argv[]) {
@@ -36,10 +40,10 @@ int main(int argc, char*argv[]) {
 	path.erase(path.end() - (path.length() - path.find_last_of("/")) + 1, path.end()); // delete path usefull
 
 	// check that the program is launching by root
-	if(getuid() != 0) {
+	/*if(getuid() != 0) {
 		cerr << "Error : must be launch by root" << endl;
 		return EXIT_FAILURE;
-	}
+	}*/
 
 
 	if(config.Load(path + "raid.conf") == false){				// load the config file
@@ -74,6 +78,17 @@ int main(int argc, char*argv[]) {
 	}
 
 	log->info("-- manage raid has been launch --");
+
+	// verification that all program use is installed
+	if(progDetected("mdadm")){
+		log->info("Error : smartmontools is not installed");
+		return EXIT_FAILURE;
+	}
+
+	if(progDetected("smartctl")){
+		log->info("Error : smartmontools is not installed");
+		return EXIT_FAILURE;
+	}
 
 	for(i=0;i<argc;i++) options.push_back(argv[i]);
 
@@ -167,8 +182,17 @@ int main(int argc, char*argv[]) {
 	}
 	return EXIT_SUCCESS;
 
+}
 
+int progDetected(std::string program){
+	vector<string> arg;
+	string output, error;
+	int exitStatus;
+	Raid tmp;
+	Command cmd;
 
-
+	cmd.exec(program, arg, output, error, exitStatus);
+	if(error.find("execvp") != string::npos) return EXIT_FAILURE;
+	else return EXIT_SUCCESS;
 }
 
