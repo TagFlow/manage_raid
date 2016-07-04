@@ -77,23 +77,23 @@ int main(int argc, char*argv[]) {
 		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
 	}
 
-	log->info("-- manage raid has been launch --");
+	log->alert("-- manage raid has been launch --");
 
 	// verification that all program use is installed
 	if(progDetected("mdadm")){
-		log->info("Error : smartmontools is not installed");
+		log->error("Error : smartmontools is not installed");
 		return EXIT_FAILURE;
 	}
 
 	if(progDetected("smartctl")){
-		log->info("Error : smartmontools is not installed");
+		log->error("Error : smartmontools is not installed");
 		return EXIT_FAILURE;
 	}
 
 	for(i=0;i<argc;i++) options.push_back(argv[i]);
 
 	if(argc<=1){
-		log->info("Error launching program : need argument");
+		log->error("Error launching program : need argument");
 		cerr << "Error : need argument" << endl;;
 		return EXIT_FAILURE;
 	}
@@ -131,40 +131,40 @@ int main(int argc, char*argv[]) {
 			raidDisk 	= options[2];
 			disk		= options[3];
 
-			log->info("disk {} fail", disk);
+			log->alert("disk {} fail", disk);
 
-			log->info("starting removing of the disk in the raid array");
-			if(md0.diskManipulation(disk, "remove")) log->info("removing disk fail");
-			else log->info("removing disk done");
+			log->alert("starting removing of the disk in the raid array");
+			if(md0.diskManipulation(disk, "remove")) log->alert("removing disk fail");
+			else log->alert("removing disk done");
 
-			log->info("starting the smart test. Please wait 2 min");
-			if(md0.smartTest(disk, state)) log->info("smart test fail");
-			else log->info("smart test done");
+			log->alert("starting the smart test. Please wait 2 min");
+			if(md0.smartTest(disk, state)) log->alert("smart test fail");
+			else log->alert("smart test done");
 
 			if(state == ""){	// not defect disk
-				log->info("starting formatting disk");
-				if(md0.diskManipulation(disk, "format")) log->info("format disk fail");
-				else log->info("format disk done");
+				log->alert("starting formatting disk");
+				if(md0.diskManipulation(disk, "format")) log->alert("format disk fail");
+				else log->alert("format disk done");
 
-				log->info("starting adding disk in the raid array");
-				if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
-				else log->info("adding disk done");
+				log->alert("starting adding disk in the raid array");
+				if(md0.diskManipulation(disk, "add")) log->alert("adding disk fail");
+				else log->alert("adding disk done");
 			}
 			else{				// defect disk
-				log->info("Disk {} is defect. Please change the disk", disk);
+				log->emerg("Disk {} is defect. Please change the disk", disk);
 
 				do{				// wait that the disk is change
 					 sleep(30);
 				}while(md0.diskDetection(disk));
-				log->info("New disk detected");
+				log->emerg("New disk detected");
 
-				log->info("starting formatting disk");
-				if(md0.diskManipulation(disk, "format")) log->info("format disk fail");
-				else log->info("format disk done");
+				log->emerg("starting formatting disk");
+				if(md0.diskManipulation(disk, "format")) log->emerg("format disk fail");
+				else log->emerg("format disk done");
 
-				log->info("starting adding disk in the raid array");
-				if(md0.diskManipulation(disk, "add")) log->info("adding disk fail");
-				else log->info("adding disk done");
+				log->emerg("starting adding disk in the raid array");
+				if(md0.diskManipulation(disk, "add")) log->emerg("adding disk fail");
+				else log->emerg("adding disk done");
 			}
 		}
 		else if(options[1] == "rebuildstarted"){
@@ -175,7 +175,7 @@ int main(int argc, char*argv[]) {
 			log->info("Rebuild finished");
 		}
 		else{
-			log->info("Error launching program : need valid argument");
+			log->error("Error launching program : need valid argument");
 			cerr << "Error : need valid argument" << endl;;
 			return EXIT_FAILURE;
 		}
