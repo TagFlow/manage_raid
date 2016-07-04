@@ -40,10 +40,10 @@ int main(int argc, char*argv[]) {
 	path.erase(path.end() - (path.length() - path.find_last_of("/")) + 1, path.end()); // delete path usefull
 
 	// check that the program is launching by root
-	/*if(getuid() != 0) {
+	if(getuid() != 0) {
 		cerr << "Error : must be launch by root" << endl;
 		return EXIT_FAILURE;
-	}*/
+	}
 
 
 	if(config.Load(path + "raid.conf") == false){				// load the config file
