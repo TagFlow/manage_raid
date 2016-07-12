@@ -20,7 +20,7 @@
 class Command {
 	public:
 	Command();
-	int exec(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error, int &exitStatus);
+	static int exec(const std::string cmd, std::vector<std::string> arg, std::string &output, std::string &error, int &exitStatus);
 };
 
 #endif /* SRC_COMMAND_H_ */

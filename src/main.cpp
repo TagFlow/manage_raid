@@ -228,9 +228,9 @@ int progDetected(std::string program){
 	string output, error;
 	int exitStatus;
 	Raid tmp;
-	Command cmd;
 
-	cmd.exec(program, arg, output, error, exitStatus);
+
+	Command::exec(program, arg, output, error, exitStatus);
 	if(error.find("execvp") != string::npos) return EXIT_FAILURE;
 	else return EXIT_SUCCESS;
 }
