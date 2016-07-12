@@ -51,6 +51,7 @@ int main(int argc, char*argv[]) {
 			("help,h", 					"Help screen")
 			("size,s", 					"Print in the log file the size of the raid")
 			("reconstruction-state,r",	"Print in the log file the state of the reconstruction of disk(s)")
+			("std-out,o",					"Print in the standard output the command output of size or/and reconstruction state")
 			("mdadm", po::value<vector<string>>()->
 			 multitoken()->zero_tokens()->composing(), "Mdadm inputs. They are 3 parameters for this mode.\n"
 			 	 	 	 	 	 	 	 	 	 	   "note : the name mdadm is not an argument\n\n"
@@ -74,7 +75,7 @@ int main(int argc, char*argv[]) {
 		cout << opt << "\n";
 		return EXIT_FAILURE;
 	}
-	else if(vm.count("size") || vm.count("reconstruction-state")){}
+	else if(vm.count("size") || vm.count("reconstruction-state") || vm.count("std-out")){}
 	else if(vm.count("mdadm")){
 		for(i=0;i<vm["mdadm"].as< vector<string> >().size();i++){	// scan the vector
 			if(vm["mdadm"].as< vector<string> >().at(i).find("Fail") != string::npos) fail = 1;
@@ -92,11 +93,10 @@ int main(int argc, char*argv[]) {
 	}
 
 	// check that the program is launching by root
-	/*if(getuid() != 0) {
+	if(getuid() != 0) {
 		cerr << "Error : must be launch by root" << endl;
 		return EXIT_FAILURE;
-	}*/
-
+	}
 
 	if(config.Load(path + "raid.conf") == false){				// load the config file
 		cerr << "Error : can't read configuration file" << endl;
@@ -154,9 +154,11 @@ int main(int argc, char*argv[]) {
 		}
 		else log->info("disk raid space : available space = {} GB       total space = {} GB", Aspace, Tspace);
 
-		/*cout << "Space state :" << endl;		// uncomment to have information in stdout
-		cout << "available space : " << Aspace << "GB" << endl;
-		cout << "total space     : " << Tspace << "GB" << endl;*/
+		if(vm.count("std-out")){
+			cout << "Space state :" << endl;
+			cout << "available space : " << Aspace << "GB" << endl;
+			cout << "total space     : " << Tspace << "GB" << endl;
+		}
 	}
 
 	if(vm.count("reconstruction-state")){
@@ -168,10 +170,12 @@ int main(int argc, char*argv[]) {
 		}
 		else log->info("reconstruction state : rebuild state = {} %       time remaining = {} min       speed = {} Mo/s", recovery, finish, speed);
 
-		/*cout << "Reconstruction state :" << endl; 	// uncomment to have information in stdout
-		cout << "rebuild state = " << recovery << " %" << endl;
-		cout << "time remaining = " << finish << " min" << endl;
-		cout << "speed = " << speed << " Mo/s" << endl;*/
+		if(vm.count("std-out")){
+			cout << "Reconstruction state :" << endl;
+			cout << "rebuild state = " << recovery << " %" << endl;
+			cout << "time remaining = " << finish << " min" << endl;
+			cout << "speed = " << speed << " Mo/s" << endl;
+		}
 	}
 
 
