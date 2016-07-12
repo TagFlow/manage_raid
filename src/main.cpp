@@ -125,7 +125,7 @@ int main(int argc, char*argv[]) {
 	// set default log level
 	spdlog::set_level(spdlog::level::info);
 	// set log level read in config file
-	for(i=0; i<spdlog::level::off; i++){
+	for(i=0; i<=spdlog::level::off; i++){
 		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
 	}
 
@@ -191,6 +191,7 @@ int main(int argc, char*argv[]) {
 		else log->alert("smart test done");
 
 		if(state == ""){	// not defect disk
+			log->alert("disk {} is NOT defect", disk);
 			log->alert("starting formatting disk");
 			if(md0.diskManipulation(disk, "format")) log->alert("format disk fail");
 			else log->alert("format disk done");
@@ -200,12 +201,12 @@ int main(int argc, char*argv[]) {
 			else log->alert("adding disk done");
 		}
 		else{				// defect disk
-			log->emerg("Disk {} is defect. Please change the disk", disk);
+			log->emerg("disk {} is defect. Please change the disk", disk);
 
 			do{				// wait that the disk is change
 				 sleep(30);
 			}while(md0.diskDetection(disk));
-			log->emerg("New disk detected");
+			log->emerg("new disk detected");
 
 			log->emerg("starting formatting disk");
 			if(md0.diskManipulation(disk, "format")) log->emerg("format disk fail");
@@ -217,11 +218,11 @@ int main(int argc, char*argv[]) {
 		}
 	}
 	else if(rebuildStarted){
-		log->info("Rebuild started");
+		log->info("rebuild started");
 	}
 
 	else if(rebuildFinished){
-		log->info("Rebuild finished");
+		log->info("rebuild finished");
 	}
 
 	return EXIT_SUCCESS;
