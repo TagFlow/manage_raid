@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/statvfs.h>
+#include <exception>
+
 #include "Command.h"
 
 class Raid {

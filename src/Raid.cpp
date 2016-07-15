@@ -37,14 +37,13 @@ int Raid::diskManipulation(const string disk, const string mode){
 	}
 
 	sleep(1);	// need to wait that disk is really in fail : mdadm have some lag
-	_cmd.exec(command, arg, output, error, exitStatus);
-
-	if(exitStatus != 0){
-		cout << "Error : " << error << endl;
-		return EXIT_FAILURE;
+	try{
+		_cmd.exec(command, arg, output, error, exitStatus);
 	}
-
-	else return EXIT_SUCCESS;
+	catch(exception &e){
+		throw;
+	}
+	return EXIT_SUCCESS;
 }
 
 int Raid::diskDetection(string disk){
@@ -56,9 +55,13 @@ int Raid::diskDetection(string disk){
 	command = "blkid";
 	arg.push_back(disk);
 
-	_cmd.exec(command, arg, output, error, exitStatus);
-	if(exitStatus != 0) return EXIT_FAILURE;
-	else return EXIT_SUCCESS;
+	try{
+		_cmd.exec(command, arg, output, error, exitStatus);
+	}
+	catch(exception &e){
+		throw;
+	}
+	return EXIT_SUCCESS;
 
 }
 int Raid::smartTest(string disk, string state){
@@ -72,12 +75,13 @@ int Raid::smartTest(string disk, string state){
 	command = "smartctl";
 	arg.push_back("-t"); 			// param 1
 	arg.push_back("short"); 		// param 2
-	arg.push_back(disk); 	// param 3
+	arg.push_back(disk); 			// param 3
 
-	_cmd.exec(command, arg, output, error, exitStatus);
-	if(exitStatus != 0){
-		cout << "Error : " << error << endl;
-		return EXIT_FAILURE;
+	try{
+		_cmd.exec(command, arg, output, error, exitStatus);
+	}
+	catch(exception &e){
+		throw;
 	}
 
 	cout << "Please wait 2 minutes for test to complete." << endl;
@@ -91,15 +95,15 @@ int Raid::smartTest(string disk, string state){
 	arg.push_back("-H");				// param 3
 	arg.push_back("-l");				// param 4
 	arg.push_back("selftest");			// param 5
-	arg.push_back(disk);		// param 6
+	arg.push_back(disk);				// param 6
 
-	_cmd.exec(command, arg, output, error, exitStatus);
-	if(exitStatus != 0){
-		state = error;
-		cout <<"erreur"<<endl;
-		return EXIT_SUCCESS;
+	try{
+		_cmd.exec(command, arg, output, error, exitStatus);
 	}
-	else return EXIT_SUCCESS;
+	catch(exception &e){
+		throw;
+	}
+	return EXIT_SUCCESS;
 }
 
 int Raid::rebuildState(double &recovery, double &finish, double &speed){
@@ -118,30 +122,31 @@ int Raid::rebuildState(double &recovery, double &finish, double &speed){
 	speed = -1.0;
 	size_t i1, j1, k1;
 	size_t i2, j2, k2;
-	if(file){
-		while(!file.eof() && find<2){
-			getline(file,line);
-			shortName.erase(0, shortName.find_last_of("/")+1);
-			if(line.find(shortName) != string::npos) find = 1;
-			if(find){
-				i1=line.find("recovery");
-				j1=line.find("finish");
-				k1=line.find("speed");
-				if(i1 != string::npos && j1 != string::npos && k1 != string::npos){
-					i2=line.find("%");
-					j2=line.find("min");
-					k2=line.find("K/sec");
-					recovery = strtod(line.substr(i1+11, i2-(i1+11)).c_str(), NULL);
-					finish = strtod(line.substr(j1+7, j2-(i1+7)).c_str(), NULL);
-					speed = strtod(line.substr(k1+6, k2-(i1+6)).c_str(), NULL);
-					find = 2;
+	try{
+		if(file){
+			while(!file.eof() && find<2){
+				getline(file,line);
+				shortName.erase(0, shortName.find_last_of("/")+1);
+				if(line.find(shortName) != string::npos) find = 1;
+				if(find){
+					i1=line.find("recovery");
+					j1=line.find("finish");
+					k1=line.find("speed");
+					if(i1 != string::npos && j1 != string::npos && k1 != string::npos){
+						i2=line.find("%");
+						j2=line.find("min");
+						k2=line.find("K/sec");
+						recovery = strtod(line.substr(i1+11, i2-(i1+11)).c_str(), NULL);
+						finish = strtod(line.substr(j1+7, j2-(i1+7)).c_str(), NULL);
+						speed = strtod(line.substr(k1+6, k2-(i1+6)).c_str(), NULL);
+						find = 2;
+					}
 				}
 			}
 		}
 	}
-	else{
-		cout << "Error : failed to open file /proc/mdstat" << endl;
-		return EXIT_FAILURE;
+	catch(exception &e){
+		throw;
 	}
 
 	file.close();
@@ -154,9 +159,13 @@ int Raid::statMem(int &Aspace, int &Tspace){
 	struct statvfs stat;
 	unsigned int gb = pow(1024,3);
 
-	if(statvfs(_mountPoint.c_str(), &stat) != 0){
-		cout << "Error : failed to get information about " << _name << endl;
-		return EXIT_FAILURE;
+	try{
+		if(statvfs(_mountPoint.c_str(), &stat) != 0){
+			throw runtime_error("failed to get information about "+_name);
+		}
+	}
+	catch(exception &e){
+		throw;
 	}
 
 	Tspace = stat.f_blocks*stat.f_frsize/gb;
