@@ -38,11 +38,14 @@ int Raid::diskManipulation(const string disk, const string mode){
 
 	sleep(1);	// need to wait that disk is really in fail : mdadm have some lag
 	try{
-		_cmd.exec(command, arg, output, error, exitStatus);
+		Command::exec(command, arg, output, error, exitStatus);
+		if(exitStatus != 0)
+			throw runtime_error("command error : mode = " + mode + " with error = " + error);
 	}
 	catch(exception &e){
 		throw;
 	}
+
 	return EXIT_SUCCESS;
 }
 
@@ -56,13 +59,14 @@ int Raid::diskDetection(string disk){
 	arg.push_back(disk);
 
 	try{
-		_cmd.exec(command, arg, output, error, exitStatus);
+		Command::exec(command, arg, output, error, exitStatus);
 	}
 	catch(exception &e){
 		throw;
 	}
-	return EXIT_SUCCESS;
 
+	if(exitStatus != 0) return EXIT_FAILURE;
+	else return EXIT_SUCCESS;
 }
 int Raid::smartTest(string disk, string state){
 
@@ -78,7 +82,9 @@ int Raid::smartTest(string disk, string state){
 	arg.push_back(disk); 			// param 3
 
 	try{
-		_cmd.exec(command, arg, output, error, exitStatus);
+		Command::exec(command, arg, output, error, exitStatus);
+		if(exitStatus != 0)
+			throw runtime_error("command error : " + error);
 	}
 	catch(exception &e){
 		throw;
@@ -99,6 +105,10 @@ int Raid::smartTest(string disk, string state){
 
 	try{
 		_cmd.exec(command, arg, output, error, exitStatus);
+		if(exitStatus != 0){
+			state = error;
+			throw runtime_error("command error : " + error);
+		}
 	}
 	catch(exception &e){
 		throw;
@@ -144,6 +154,7 @@ int Raid::rebuildState(double &recovery, double &finish, double &speed){
 				}
 			}
 		}
+		else throw runtime_error("can't open the file ");
 	}
 	catch(exception &e){
 		throw;

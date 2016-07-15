@@ -31,49 +31,47 @@ int Command::exec(const string cmd, vector<string> arg, string &output, string &
 	}
 	argSend.push_back((char *)NULL);
 
-	do{
-			pid1 = fork();
-			doCounter++;
-		}while((pid1 == -1) && (errno == EAGAIN) && (doCounter <= 10));
+	try{
+		do{
+				pid1 = fork();
+				doCounter++;
+			}while((pid1 == -1) && (errno == EAGAIN) && (doCounter <= 10));
 
-		if(pid1 == -1){
-			perror("fork");
-			return EXIT_FAILURE;
+			if(pid1 == -1)
+				throw runtime_error("failed to fork");
+
+		if(pid1 == 0){	// son process
+
+				close(descriptorSTDOut[0]);
+				close(descriptorSTDErr[0]);
+
+				dup2(descriptorSTDOut[1],STDOUT_FILENO);
+				dup2(descriptorSTDErr[1],STDERR_FILENO);
+
+				if(execvp(cmd.c_str(), &argSend[0]) != 0)
+					throw runtime_error("failed to fork");
 		}
+		else{			// father process
 
-	if(pid1 == 0){	// son process
+			close(descriptorSTDOut[1]);
+			close(descriptorSTDErr[1]);
 
-			close(descriptorSTDOut[0]);
-			close(descriptorSTDErr[0]);
+			if(wait(&status) == -1) // wait end of son's process
+				throw runtime_error("failed to wait the end of son process");
 
-			dup2(descriptorSTDOut[1],STDOUT_FILENO);
-			dup2(descriptorSTDErr[1],STDERR_FILENO);
+			if(WIFSIGNALED(status))
+				throw runtime_error("son's process failed");
 
-			if(execvp(cmd.c_str(), &argSend[0]) != 0){
-				perror("execvp");
-				exit(EXIT_FAILURE);
-			}
+			read(descriptorSTDOut[0], messageOut, sizeof(messageOut));
+			output = messageOut;
+			read(descriptorSTDErr[0], messageErr, sizeof(messageErr));
+			error = messageErr;
+			exitStatus = WEXITSTATUS(status);
+
+		}
 	}
-	else{			// father process
-
-		close(descriptorSTDOut[1]);
-		close(descriptorSTDErr[1]);
-
-		if(wait(&status) == -1){ // wait end of son's process
-			perror("wait");
-			return EXIT_FAILURE;
-		}
-		if(WIFSIGNALED(status)){
-			cout << "error : son's process fails" << endl;
-			return EXIT_FAILURE;
-		}
-
-		read(descriptorSTDOut[0], messageOut, sizeof(messageOut));
-		output = messageOut;
-		read(descriptorSTDErr[0], messageErr, sizeof(messageErr));
-		error = messageErr;
-		exitStatus = WEXITSTATUS(status);
-
+	catch(exception &e){
+		throw;
 	}
 
 	return EXIT_SUCCESS;

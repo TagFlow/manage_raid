@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/wait.h>
+#include <exception>
 
 #define MESSAGE_SIZE 1024
 

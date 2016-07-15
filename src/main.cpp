@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <boost/program_options.hpp>
+#include <exception>
 
 #include "Raid.h"
 #include "spdlog/spdlog.h"
@@ -30,9 +31,7 @@ int main(int argc, char*argv[]) {
 	vector<string> 	options;
 	Configuration	config;
 	unsigned int 	i;
-	int				fail = 0;
-	int				rebuildStarted = 0;
-	int 			rebuildFinished = 0;;
+	int 			fail(0), rebuildStarted(0), rebuildFinished(0), Aspace(-1), Tspace(-1);
 	shared_ptr<spdlog::logger> log;	// var pointer for the log lib
 	string 			raidDisk, disk, state, path;
 	string			raidName, raidMount, logFile, logLevel; 	// for config file
@@ -93,25 +92,28 @@ int main(int argc, char*argv[]) {
 	}
 
 	// check that the program is launching by root
-	if(getuid() != 0) {
+	/*if(getuid() != 0) {
 		cerr << "Error : must be launch by root" << endl;
 		return EXIT_FAILURE;
+	}*/
+
+	try{
+		if(config.Load(path + "raid.conf") == false)			// load the config file
+			throw runtime_error("can't read configuration file");
+
+		if (!(config.Get("RAID_NAME", 		raidName)		&&		// read essential parameter of config file
+			  config.Get("RAID_MOUNT", 		raidMount)		&&
+			  config.Get("LOG_ROTATE_ON", 	logRotOn)		&&
+			  config.Get("LOG_FILE", 		logFile)		&&
+			  config.Get("LOG_SIZE", 		logSize)		&&
+			  config.Get("LOG_MAX_FILE",	logMaxFile)		&&
+			  config.Get("LOG_LEVEL",		logLevel)))
+
+			throw runtime_error("missing parameter in configuration file");
 	}
-
-	if(config.Load(path + "raid.conf") == false){				// load the config file
-		cerr << "Error : can't read configuration file" << endl;
-		return EXIT_FAILURE;
-	}
-
-	if (!(config.Get("RAID_NAME", 		raidName)		&&		// read essential parameter of config file
-		  config.Get("RAID_MOUNT", 		raidMount)		&&
-		  config.Get("LOG_ROTATE_ON", 	logRotOn)		&&
-		  config.Get("LOG_FILE", 		logFile)		&&
-		  config.Get("LOG_SIZE", 		logSize)		&&
-		  config.Get("LOG_MAX_FILE",	logMaxFile)		&&
-		  config.Get("LOG_LEVEL",		logLevel)))	{
-
-		cerr << "Error : missing parameter in configuration file." << endl;
+	catch(exception &e){
+		log->error("{}", e.what());
+		cerr << e.what() << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -129,30 +131,39 @@ int main(int argc, char*argv[]) {
 		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
 	}
 
-	log->info("-- manage raid has been launch --");
-
 	// verification that all program use is installed
-	if(progDetected("mdadm")){
-		log->error("Mdadm is not installed");
-		cerr << "Mdadm is not installed" << endl;
+	try{
+		progDetected("mdadm");
+	}
+	catch(exception &e){
+		log->error("{}", e.what());
+		cerr << e.what() << endl;
 		return EXIT_FAILURE;
 	}
 
-	if(progDetected("smartctl")){
-		log->error("Smartmontools is not installed");
-		cerr << "Smartmontools is not installed" << endl;
+	try{
+		progDetected("smartctl");
+	}
+	catch(exception &e){
+		log->error("{}", e.what());
+		cerr << e.what() << endl;
 		return EXIT_FAILURE;
 	}
 
 
+	 // start managing
 	if(vm.count("size")){
 		log->info("ask disk raid space");
-		int Aspace, Tspace;
-		if(md0.statMem(Aspace, Tspace)){
-			log->error("Failed to get information about {}", raidName);
-			cerr << "Failed to get information about " << raidName << endl;
+		try{
+			md0.statMem(Aspace, Tspace);
 		}
-		else log->info("disk raid space : available space = {} GB       total space = {} GB", Aspace, Tspace);
+		catch(exception &e){
+			log->error("{}", e.what());
+			cerr << e.what() << endl;
+			return EXIT_FAILURE;
+		}
+
+		log->info("disk raid space : available space = {} GB       total space = {} GB", Aspace, Tspace);
 
 		if(vm.count("std-out")){
 			cout << "Space state :" << endl;
@@ -164,11 +175,15 @@ int main(int argc, char*argv[]) {
 	if(vm.count("reconstruction-state")){
 		log->info("ask reconstruction state");
 		double recovery, finish, speed;
-		if(md0.rebuildState(recovery, finish, speed)){
-			log->error("Failed to open /proc/mdstat");
-			cerr << "Failed to open /proc/mdstat" << endl;
+		try{
+			md0.rebuildState(recovery, finish, speed);
 		}
-		else log->info("reconstruction state : rebuild state = {} %       time remaining = {} min       speed = {} Mo/s", recovery, finish, speed);
+		catch(exception &e){
+			log->error("{}", e.what());
+			cerr << e.what() << endl;
+			return EXIT_FAILURE;
+		}
+		log->info("reconstruction state : rebuild state = {} %       time remaining = {} min       speed = {} Mo/s", recovery, finish, speed);
 
 		if(vm.count("std-out")){
 			cout << "Reconstruction state :" << endl;
@@ -181,40 +196,46 @@ int main(int argc, char*argv[]) {
 
 	if(fail){
 		log->alert("disk {} fail", disk);
+		try{
+			log->alert("starting removing of the disk in the raid array");
+			md0.diskManipulation(disk, "remove"); //log->alert("removing disk fail");
+			log->alert("removing disk done");
 
-		log->alert("starting removing of the disk in the raid array");
-		if(md0.diskManipulation(disk, "remove")) log->alert("removing disk fail");
-		else log->alert("removing disk done");
+			log->alert("starting the smart test. Please wait 2 min");
+			md0.smartTest(disk, state); //log->alert("smart test fail");
+			log->alert("smart test done");
 
-		log->alert("starting the smart test. Please wait 2 min");
-		if(md0.smartTest(disk, state)) log->alert("smart test fail");
-		else log->alert("smart test done");
+			if(state == ""){	// not defect disk
+				log->alert("disk {} is NOT defect", disk);
+				log->alert("starting formatting disk");
+				md0.diskManipulation(disk, "format");// log->alert("format disk fail");
+				log->alert("format disk done");
 
-		if(state == ""){	// not defect disk
-			log->alert("disk {} is NOT defect", disk);
-			log->alert("starting formatting disk");
-			if(md0.diskManipulation(disk, "format")) log->alert("format disk fail");
-			else log->alert("format disk done");
+				log->alert("starting adding disk in the raid array");
+				md0.diskManipulation(disk, "add");// log->alert("adding disk fail");
+				log->alert("adding disk done");
+			}
+			else{				// defect disk
+				log->emerg("disk {} is defect. Please change the disk", disk);
 
-			log->alert("starting adding disk in the raid array");
-			if(md0.diskManipulation(disk, "add")) log->alert("adding disk fail");
-			else log->alert("adding disk done");
+				do{				// wait that the disk is change
+					 sleep(30);
+				}while(md0.diskDetection(disk));
+				log->emerg("new disk detected");
+
+				log->emerg("starting formatting disk");
+				md0.diskManipulation(disk, "format");// log->emerg("format disk fail");
+				log->emerg("format disk done");
+
+				log->emerg("starting adding disk in the raid array");
+				md0.diskManipulation(disk, "add");// log->emerg("adding disk fail");
+				log->emerg("adding disk done");
+			}
 		}
-		else{				// defect disk
-			log->emerg("disk {} is defect. Please change the disk", disk);
-
-			do{				// wait that the disk is change
-				 sleep(30);
-			}while(md0.diskDetection(disk));
-			log->emerg("new disk detected");
-
-			log->emerg("starting formatting disk");
-			if(md0.diskManipulation(disk, "format")) log->emerg("format disk fail");
-			else log->emerg("format disk done");
-
-			log->emerg("starting adding disk in the raid array");
-			if(md0.diskManipulation(disk, "add")) log->emerg("adding disk fail");
-			else log->emerg("adding disk done");
+		catch(exception &e){
+			log->error("{}", e.what());
+			cerr << e.what() << endl;
+			return EXIT_FAILURE;
 		}
 	}
 	else if(rebuildStarted){
@@ -233,11 +254,15 @@ int progDetected(std::string program){
 	string output, error;
 	int exitStatus;
 	Raid tmp;
-
-
-	Command::exec(program, arg, output, error, exitStatus);
-	if(error.find("execvp") != string::npos) return EXIT_FAILURE;
-	else return EXIT_SUCCESS;
+	try{
+		Command::exec(program, arg, output, error, exitStatus);
+		if(error.find("execvp") != string::npos)
+			throw runtime_error(program+" is not installed");
+	}
+	catch(exception &e){
+		throw;
+	}
+	return EXIT_SUCCESS;
 }
 
 
