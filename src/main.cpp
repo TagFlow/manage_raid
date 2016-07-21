@@ -92,10 +92,10 @@ int main(int argc, char*argv[]) {
 	}
 
 	// check that the program is launching by root
-	/*if(getuid() != 0) {
+	if(getuid() != 0) {
 		cerr << "Error : must be launch by root" << endl;
 		return EXIT_FAILURE;
-	}*/
+	}
 
 	try{
 		if(config.Load(path + "raid.conf") == false)			// load the config file
@@ -112,7 +112,6 @@ int main(int argc, char*argv[]) {
 			throw runtime_error("missing parameter in configuration file");
 	}
 	catch(exception &e){
-		log->error("{}", e.what());
 		cerr << e.what() << endl;
 		return EXIT_FAILURE;
 	}
@@ -197,37 +196,40 @@ int main(int argc, char*argv[]) {
 	if(fail){
 		log->alert("disk {} fail", disk);
 		try{
-			log->alert("starting removing of the disk in the raid array");
-			md0.diskManipulation(disk, "remove"); //log->alert("removing disk fail");
-			log->alert("removing disk done");
+			if(!md0.diskDetection(disk)){
+				log->alert("start removing the disk of the raid array");
+				md0.diskManipulation(disk, "remove"); //log->alert("removing disk fail");
+				log->alert("removing disk done");
 
-			log->alert("starting the smart test. Please wait 2 min");
-			md0.smartTest(disk, state); //log->alert("smart test fail");
-			log->alert("smart test done");
+				log->alert("start smart test. Please wait 2 min");
+				md0.smartTest(disk, state); //log->alert("smart test fail");
+				log->alert("smart test done");
+			}
+			else state = "no disk";
 
 			if(state == ""){	// not defect disk
 				log->alert("disk {} is NOT defect", disk);
-				log->alert("starting formatting disk");
+				log->alert("start formatting disk");
 				md0.diskManipulation(disk, "format");// log->alert("format disk fail");
 				log->alert("format disk done");
 
-				log->alert("starting adding disk in the raid array");
+				log->alert("start adding disk in the raid array");
 				md0.diskManipulation(disk, "add");// log->alert("adding disk fail");
 				log->alert("adding disk done");
 			}
 			else{				// defect disk
-				log->emerg("disk {} is defect. Please change the disk", disk);
+				log->emerg("disk {} is defect or not present. Please insert a new the disk", disk);
 
 				do{				// wait that the disk is change
 					 sleep(30);
 				}while(md0.diskDetection(disk));
 				log->emerg("new disk detected");
 
-				log->emerg("starting formatting disk");
+				log->emerg("start formatting disk");
 				md0.diskManipulation(disk, "format");// log->emerg("format disk fail");
 				log->emerg("format disk done");
 
-				log->emerg("starting adding disk in the raid array");
+				log->emerg("start adding disk in the raid array");
 				md0.diskManipulation(disk, "add");// log->emerg("adding disk fail");
 				log->emerg("adding disk done");
 			}
