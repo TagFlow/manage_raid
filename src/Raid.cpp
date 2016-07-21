@@ -40,7 +40,7 @@ int Raid::diskManipulation(const string disk, const string mode){
 	try{
 		Command::exec(command, arg, output, error, exitStatus);
 		if(exitStatus != 0)
-			throw runtime_error("command error : mode = " + mode + " with error = " + error);
+			throw runtime_error("command error for mode = " + mode + " with error = " + error);
 	}
 	catch(exception &e){
 		throw;
