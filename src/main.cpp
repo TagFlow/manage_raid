@@ -38,7 +38,8 @@ int main(int argc, char*argv[]) {
 	string 			raidDisk, disk, state, path;
 	string			raidName, raidMount, logFile, logLevel; 	// for config file
 	int				logRotOn, logSize, logMaxFile;		// for config file
-	fstream			fState;
+	ofstream		fwState;
+	ifstream 		frState;
 					/*
 					 * logRotOn define if the rotation of log is enabling or not. If =1 -> yes if =0 -> no
 					 * logSize in Mo
@@ -138,6 +139,17 @@ int main(int argc, char*argv[]) {
 		log->info("{}",argv[h]);
 	}*/
 
+	frState.open(path+".state.tmp", ios_base::in);
+	if(frState.good()){
+		getline(frState, disk);
+		frState.close();
+	}
+	else if(!degradedArray){
+		fwState.open(path+".state.tmp", ios_base::out);
+		fwState.write(disk.c_str(), disk.length());
+		fwState.close();
+	}
+
 	// verification that all program use is installed
 	try{
 		progDetected("mdadm");
@@ -199,11 +211,10 @@ int main(int argc, char*argv[]) {
 		}
 	}
 
-
 	if(fail | degradedArray){
 		log->alert("disk {} fail", disk);
 		try{
-			if(!md0.diskDetection(disk)){
+			if(!md0.diskDetection(disk) && !degradedArray){
 				log->alert("start removing the disk of the raid array");
 				md0.diskManipulation(disk, "remove"); //log->alert("removing disk fail");
 				log->alert("removing disk done");
@@ -245,6 +256,8 @@ int main(int argc, char*argv[]) {
 		catch(exception &e){
 			log->error("{}", e.what());
 			cerr << e.what() << endl;
+			path += ".state.tmp";
+			remove(path.c_str());
 			return EXIT_FAILURE;
 		}
 	}
@@ -256,6 +269,8 @@ int main(int argc, char*argv[]) {
 		log->info("rebuild finished");
 	}
 
+	path += ".state.tmp";
+	remove(path.c_str());
 	return EXIT_SUCCESS;
 }
 
