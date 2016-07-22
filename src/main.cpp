@@ -130,6 +130,10 @@ int main(int argc, char*argv[]) {
 		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
 	}
 
+	/*for(int h=0;h<argc;h++){
+		log->info("{}",argv[h]);
+	}*/
+
 	// verification that all program use is installed
 	try{
 		progDetected("mdadm");
@@ -148,7 +152,6 @@ int main(int argc, char*argv[]) {
 		cerr << e.what() << endl;
 		return EXIT_FAILURE;
 	}
-
 
 	 // start managing
 	if(vm.count("size")){
@@ -218,11 +221,11 @@ int main(int argc, char*argv[]) {
 				log->alert("adding disk done");
 			}
 			else{				// defect disk
-				log->emerg("disk {} is defect or not present. Please insert a new the disk", disk);
+				log->emerg("disk {} is defect or not present. Please insert a disk", disk);
 
 				do{				// wait that the disk is change
 					 sleep(30);
-				}while(md0.diskDetection(disk));
+				}while(!((bool)md0.diskDetection(disk) ^ (bool)md0.diskDetection("/dev/sdc")));
 				log->emerg("new disk detected");
 
 				log->emerg("start formatting disk");
