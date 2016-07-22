@@ -13,6 +13,8 @@
 #include <cctype>
 #include <boost/program_options.hpp>
 #include <exception>
+#include <fstream>
+#include <cstdio>
 
 #include "Raid.h"
 #include "spdlog/spdlog.h"
@@ -31,11 +33,12 @@ int main(int argc, char*argv[]) {
 	vector<string> 	options;
 	Configuration	config;
 	unsigned int 	i;
-	int 			fail(0), rebuildStarted(0), rebuildFinished(0), Aspace(-1), Tspace(-1);
+	int 			fail(0), degradedArray(0), rebuildStarted(0), rebuildFinished(0), Aspace(-1), Tspace(-1);
 	shared_ptr<spdlog::logger> log;	// var pointer for the log lib
 	string 			raidDisk, disk, state, path;
 	string			raidName, raidMount, logFile, logLevel; 	// for config file
 	int				logRotOn, logSize, logMaxFile;		// for config file
+	fstream			fState;
 					/*
 					 * logRotOn define if the rotation of log is enabling or not. If =1 -> yes if =0 -> no
 					 * logSize in Mo
@@ -52,9 +55,9 @@ int main(int argc, char*argv[]) {
 			("reconstruction-state,r",	"Print in the log file the state of the reconstruction of disk(s)")
 			("std-out,o",					"Print in the standard output the command output of size or/and reconstruction state")
 			("mdadm", po::value<vector<string>>()->
-			 multitoken()->zero_tokens()->composing(), "Mdadm inputs. They are 3 parameters for this mode.\n"
+			 multitoken()->zero_tokens()->composing(), "Mdadm inputs. They are 3 arguments for this mode.\n"
 			 	 	 	 	 	 	 	 	 	 	   "note : the name mdadm is not an argument\n\n"
-					 	 	 	 	 	 	 	 	   "$1 : string with Fail or RebuildsStarted or RebuildFinished \n"
+					 	 	 	 	 	 	 	 	   "$1 : string with Fail or DegradedArray or RebuildsStarted or RebuildFinished \n"
 					 	 	 	 	 	 	 	 	   "$2 : name of the raid disk (system path)\n"
 			 	 	 	 	 	 	 	 	 	 	   "$3 : name of the concerned disk (system path)\n\n"
 			 	 	 	 	 	 	 	 	 	 	   "This mode of the program is calling by mdadm itself.");
@@ -78,6 +81,7 @@ int main(int argc, char*argv[]) {
 	else if(vm.count("mdadm")){
 		for(i=0;i<vm["mdadm"].as< vector<string> >().size();i++){	// scan the vector
 			if(vm["mdadm"].as< vector<string> >().at(i).find("Fail") != string::npos) fail = 1;
+			if(vm["mdadm"].as< vector<string> >().at(i).find("DegradedArray") != string::npos) degradedArray = 1;
 			if(vm["mdadm"].as< vector<string> >().at(i).find("RebuildStarted") != string::npos) rebuildStarted = 1;
 			if(vm["mdadm"].as< vector<string> >().at(i).find("RebuildFinished") != string::npos) rebuildFinished = 1;
 			if(vm["mdadm"].as< vector<string> >().at(i).find("/dev") != string::npos){
@@ -196,13 +200,14 @@ int main(int argc, char*argv[]) {
 	}
 
 
-	if(fail){
+	if(fail | degradedArray){
 		log->alert("disk {} fail", disk);
 		try{
 			if(!md0.diskDetection(disk)){
 				log->alert("start removing the disk of the raid array");
 				md0.diskManipulation(disk, "remove"); //log->alert("removing disk fail");
 				log->alert("removing disk done");
+
 
 				log->alert("start smart test. Please wait 2 min");
 				md0.smartTest(disk, state); //log->alert("smart test fail");
