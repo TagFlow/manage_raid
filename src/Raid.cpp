@@ -55,15 +55,15 @@ int Raid::diskDetection(string disk){
 	string command, output, error;
 	int exitStatus;
 
-	command = "blkid";
+	command = "lsblk";
 	arg.push_back(disk);
 
-	try{
+	//try{
 		Command::exec(command, arg, output, error, exitStatus);
-	}
-	catch(exception &e){
-		throw;
-	}
+	//}
+	//catch(exception &e){
+	//	throw;
+	//}
 
 	if(exitStatus != 0) return EXIT_FAILURE;
 	else return EXIT_SUCCESS;
