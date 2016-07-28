@@ -5,6 +5,10 @@
 // Description : Raid manager for mdadm
 //
 // Language	   : C++ 2011
+//
+//
+// Note 	   : need g++ v.5.3.1 for build. This program has been
+//				 tested with.
 //============================================================================
 
 #include <string>
@@ -134,10 +138,6 @@ int main(int argc, char*argv[]) {
 	for(i=0; i<=spdlog::level::off; i++){
 		if(logLevel == spdlog::level::to_str((spdlog::level::level_enum) i)) spdlog::set_level((spdlog::level::level_enum)i);
 	}
-
-	/*for(int h=0;h<argc;h++){
-		log->info("{}",argv[h]);
-	}*/
 
 	frState.open(path+".state.tmp", ios_base::in);
 	if(frState.good()){
